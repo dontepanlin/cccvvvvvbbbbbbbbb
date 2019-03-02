@@ -24,10 +24,19 @@ struct Command {
 static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
+	{ "hello", "Greetings", mon_hello },
+	{ "backtrace", "Display backtrace", mon_backtrace },
 };
 #define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
 
 /***** Implementations of basic kernel monitor commands *****/
+int
+mon_hello(int argc, char **argv, struct Trapframe *tf)
+{
+	cprintf("Greetings traveler.\n");
+	cprintf("%o\n", 12);
+	return 0;
+}
 
 int
 mon_help(int argc, char **argv, struct Trapframe *tf)
@@ -63,6 +72,26 @@ int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
 	// Your code here.
+	uint32_t current_eip = (uint32_t) &mon_backtrace;
+	uint32_t *prev_ebp_ptr = (uint32_t*)read_ebp();
+	cprintf("Stack backtrace:\n");
+	while (prev_ebp_ptr != 0) {
+		cprintf("ebp %08x  eip %08x  args ", (uint32_t)prev_ebp_ptr, current_eip);
+		int i=0;
+		for (i = 2; i < 7; i++) {
+			cprintf("%08x ", *(prev_ebp_ptr + i));
+		}
+		cprintf("\n");
+
+		struct Eipdebuginfo frame_info = { 0 };
+		debuginfo_eip(current_eip, &frame_info);
+		cprintf("    %s:%d: %.*s+%d\n", frame_info.eip_file, frame_info.eip_line
+				, frame_info.eip_fn_namelen, frame_info.eip_fn_name
+				, current_eip - frame_info.eip_fn_addr);
+
+		current_eip = *(prev_ebp_ptr + 1);
+		prev_ebp_ptr = (uint32_t*) *prev_ebp_ptr;
+	}
 	return 0;
 }
 
