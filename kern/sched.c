@@ -27,9 +27,6 @@ sched_yield(void)
 
 	//LAB 3: Your code here.
 	int32_t curindex = (curenv == NULL) ? -1 : curenv - envs;
-
-	// do NENV loops, searching for running env modulo NENV,
-	// start search right after current ENV_RUNNING
 	for (int32_t i = 0; i < NENV; i++)
 	{
 		curindex += 1;

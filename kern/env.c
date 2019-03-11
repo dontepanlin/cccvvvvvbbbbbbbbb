@@ -251,55 +251,27 @@ bind_functions(struct Env *e, struct Elf *elf)
 	*((int *) 0x00231010) = (int) &sys_exit;
 	*((int *) 0x0024100c) = (int) &sys_exit;
 	*/
-	struct Secthdr *sh_start = (struct Secthdr *) (((void *)elf) + elf->e_shoff);
-	struct Secthdr *sh = sh_start;
-	struct Secthdr *esh = (struct Secthdr *) (sh + elf->e_shnum);
-	// load each program segment (ignores ph flags)
-	for (; sh < esh; sh++) {
-		// p_pa is the load address of this segment (as well
-		// as the physical address)
-		if (sh->sh_type != ELF_SHT_SYMTAB) {
-			continue;
-		}
-
-		// for section header with type == .symtab, the sh_link member contains
-		// the section header index of the associated string table
-		// i.e. index of another section header which has a string table for symbols here
-		struct Secthdr *sh_string_table = sh_start + sh->sh_link;
-		if (sh_string_table->sh_type != ELF_SHT_STRTAB) {
-			panic("can not find string table when loading user program from elf\n");
-		}
-		char *symbol_names = ((void *)elf) + sh_string_table->sh_offset;
-
-		struct Elf32_Sym *sym = ((void *)elf) + sh->sh_offset;
-		struct Elf32_Sym *esym = ((void *)elf) + sh->sh_offset + sh->sh_size;
-		// for section header with type == .symtab, the sh_info member contains
-		// a number equal to ((index of the last LOCAL symbol in symbol-table) + 1)
-		// so index of the first symbol with GLOBAL binding
-		sym += sh->sh_info;
-
-		for (; sym < esym; sym++) {
-			if (! sym->st_name) {
-				// the symbol has no name, not interesting for us
-				continue;
+	struct Secthdr *tmp = (struct Secthdr *)((uint8_t *)elf + elf->e_shoff);
+	for (int i = 0; i < elf->e_shnum; i++)
+	{
+		if (tmp[i].sh_type == ELF_SHT_SYMTAB)
+		{
+			int cnt = tmp[i].sh_size / tmp[i].sh_entsize;
+			struct Elf32_Sym *elf32 = (struct Elf32_Sym *)((uint8_t *)elf + tmp[i].sh_offset);
+			struct Secthdr *str = (struct Secthdr *)(&tmp[tmp[i].sh_link]);
+			for (int j = 0; j < cnt; j++)
+			{
+				char *name = (char *)elf + str->sh_offset + elf32[j].st_name;
+				int flag = ELF32_ST_BIND(elf32[j].st_info);
+				if (flag)
+				{
+					uintptr_t now = find_function(name);
+					if (now)
+					{
+						*((uint32_t *)elf32[j].st_value) = now;
+					}
+				}
 			}
-			if (ELF32_ST_BIND(sym->st_info) != STB_GLOBAL) {
-				// the symbol is not global, not interesting for us
-				continue;
-			}
-			if (ELF32_ST_TYPE(sym->st_info) != STT_OBJECT
-				&& ELF32_ST_TYPE(sym->st_info) != STT_FUNC) {
-				// the symbol is not an object and not a function, not interesting
-				continue;
-			}
-			uintptr_t func = find_function(symbol_names + sym->st_name);
-			if (func == 0) {
-				// if did not find a function with such name, just skip this
-				continue;
-			}
-			// else we found a function corresponding to this symbol, link them
-			// take the virtual address of the variable and write address of function to it
-			*((uintptr_t *)sym->st_value) = func;
 		}
 	}
 }
@@ -362,19 +334,12 @@ load_icode(struct Env *e, uint8_t *binary, size_t size)
 	struct Proghdr *eph = (struct Proghdr *) (ph + elf_header->e_phnum);
 	// load each program segment (ignores ph flags)
 	for (; ph < eph; ph++) {
-		// p_pa is the load address of this segment (as well
-		// as the physical address)
 		if (ph->p_type != ELF_PROG_LOAD) {
 			continue;
 		}
 		memmove((void*)ph->p_va, binary + ph->p_offset, ph->p_filesz);
 		memset((void*)(ph->p_va + ph->p_filesz), 0, ph->p_memsz - ph->p_filesz);
 	}
-
-	// int32_t total_size = total_mapping_size(
-	// 	(struct Proghdr *)(binary + elf_header->e_phoff)
-	// 	, elf_header->e_phnum
-	// );
 
 	e->env_tf.tf_eip = elf_header->e_entry;
 	// e->env_tf.tf_esp = total_size;
