@@ -225,6 +225,9 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	e->env_tf.tf_esp = expected_addr;
 #else
 #endif
+
+	e->env_tf.tf_eflags |= FL_IF;
+
 	// You will set e->env_tf.tf_eip later.
 
 	// commit the allocation
@@ -431,6 +434,7 @@ env_pop_tf(struct Trapframe *tf)
 #ifdef CONFIG_KSPACE
 	static uintptr_t eip = 0;
 	eip = tf->tf_eip;
+	tf->tf_eflags |= FL_IF;
 
 	asm volatile (
 		"mov %c[ebx](%[tf]), %%ebx \n\t"
