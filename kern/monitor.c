@@ -29,7 +29,8 @@ static struct Command commands[] = {
 	{ "hello", "Greetings", mon_hello },
 	{ "backtrace", "Display backtrace", mon_backtrace },
 	{"timer_start", "Start timer", mon_tstart},
-	{"timer_stop", "Stop timer", mon_tstop}
+	{"timer_stop", "Stop timer", mon_tstop},
+	{"show_pages", "Show pages", mon_pages}
 };
 #define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
 
@@ -108,6 +109,34 @@ int mon_tstart(int argc, char **argv, struct Trapframe *tf)
 int mon_tstop(int argc, char **argv, struct Trapframe *tf)
 {
 	timer_stop();
+	return 0;
+}
+
+int mon_pages(int argc, char **argv, struct Trapframe *tf)
+{
+	int prev = 0;
+	bool prev_al = true;
+	int pc = 0;
+	for  (struct PageInfo* it = &pages[0]; it < pages + npages; it++) {
+		bool al = it->pp_ref > 0;
+		if (prev_al != al || it == pages + npages - 1) {
+			if (prev == pc -1) {
+				cprintf("%d", prev + 1);
+			} else {
+				cprintf("%d..%d", prev+1, pc);				
+			}
+
+			if (!prev_al) {
+				cprintf(" FREE\n");
+			} else {
+				cprintf(" ALLOC\n");
+			}
+
+			prev_al = al;
+			prev = pc;
+		}
+		pc++;
+	}
 	return 0;
 }
 

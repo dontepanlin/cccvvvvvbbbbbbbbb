@@ -208,26 +208,35 @@ page_init(void)
 	// Change the code to reflect this.
 	// NB: DO NOT actually touch the physical memory corresponding to
 	// free pages!
-	assert(npages > 0);
-	struct PageInfo *tmp = NULL;
-	size_t i;
-	for (i = 0; i < npages; i++) {
-		pages[i].pp_ref = 0;
-		uint32_t addr = page2pa(&pages[i]);
-		if ((addr == 0) ||
-		(IOPHYSMEM <= addr && addr < EXTPHYSMEM) ||
-		(EXTPHYSMEM <= addr && addr < (uint32_t)(nextfree - KERNBASE)) ||
-		((uint32_t)(nextfree - KERNBASE + BOOTMEMSIZE) <= addr)) {
-			continue;
-		}
-		if (! page_free_list) {
-			page_free_list = &pages[i];
-			tmp = &pages[i];
-		} else {
-			tmp->pp_link = &pages[i];
-			tmp = &pages[i];
-		}
-	}
+	struct PageInfo* pp = &pages[0];
+    pp->pp_ref = 1;
+    pp->pp_link = NULL;
+    pp++;
+	int c = 0;
+    while (pp != &pages[npages_basemem]) {
+        pp->pp_ref = 0;
+        pp->pp_link = page_free_list;
+        page_free_list = pp;
+        pp++;
+		c++;
+    }
+	cprintf("Count1 %d \n", c);
+    while (pp != pa2page(EXTPHYSMEM)) {
+        pp->pp_ref = 1;
+        pp->pp_link = NULL;
+        pp++;
+		c++;
+    }
+	cprintf("Count2 %d \n", c);
+    pp = pa2page(PADDR(boot_alloc(0)));
+    while (pp != pages + npages) {
+        pp->pp_ref = 0;
+        pp->pp_link = page_free_list;
+        page_free_list = pp;
+        pp++;
+		c++;
+    }
+	cprintf("Count2 %d \n", c);
 }
 
 //
