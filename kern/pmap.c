@@ -73,7 +73,7 @@ static void boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t 
 static void check_page_free_list(bool only_low_memory);
 static void check_page_alloc(void);
 static physaddr_t check_va2pa(pde_t *pgdir, uintptr_t va);
-
+	static char *nextfree;	// virtual address of next byte of free memory
 // This simple physical memory allocator is used only while JOS is setting
 // up its virtual memory system.  page_alloc() is the real allocator.
 //
@@ -89,7 +89,6 @@ static physaddr_t check_va2pa(pde_t *pgdir, uintptr_t va);
 static void *
 boot_alloc(uint32_t n)
 {
-	static char *nextfree;	// virtual address of next byte of free memory
 	//char *result;
 
 	// Initialize nextfree if this is the first time.
@@ -97,8 +96,8 @@ boot_alloc(uint32_t n)
 	// which points to the end of the kernel's bss segment:
 	// the first virtual address that the linker did *not* assign
 	// to any kernel code or global variables.
+	extern char end[];
 	if (!nextfree) {
-		extern char end[];
 		nextfree = ROUNDUP((char *) end, PGSIZE);
 	}
 
@@ -107,6 +106,13 @@ boot_alloc(uint32_t n)
 	// to a multiple of PGSIZE.
 	//
 	// LAB 6: Your code here.
+
+	char *result = nextfree;
+	nextfree += ROUNDUP(n, PGSIZE);
+	if ((uint32_t)nextfree > (uint32_t)end + BOOTMEMSIZE) {
+		panic("out memory.\n");
+	}
+	return result;
 
 #ifdef SANITIZE_SHADOW_BASE
 	// Unpoison the result since it is now allocated.
@@ -132,7 +138,7 @@ mem_init(void)
 	i386_detect_memory();
 
 	// Remove this line when you're ready to test this function.
-	panic("mem_init: This function is not finished\n");
+	// panic("mem_init: This function is not finished\n");
 
 	//////////////////////////////////////////////////////////////////////
 	// create initial page directory.
@@ -155,7 +161,8 @@ mem_init(void)
 	// array.  'npages' is the number of physical pages in memory.  Use memset
 	// to initialize all fields of each struct PageInfo to 0.
 	// Your code goes here:
-
+	pages = boot_alloc(npages * sizeof(struct PageInfo));
+	memset(pages, 0, npages * sizeof(struct PageInfo));
 
 	//////////////////////////////////////////////////////////////////////
 	// Now that we've allocated the initial kernel data structures, we set
@@ -201,11 +208,25 @@ page_init(void)
 	// Change the code to reflect this.
 	// NB: DO NOT actually touch the physical memory corresponding to
 	// free pages!
+	assert(npages > 0);
+	struct PageInfo *tmp = NULL;
 	size_t i;
 	for (i = 0; i < npages; i++) {
 		pages[i].pp_ref = 0;
-		pages[i].pp_link = page_free_list;
-		page_free_list = &pages[i];
+		uint32_t addr = page2pa(&pages[i]);
+		if ((addr == 0) ||
+		(IOPHYSMEM <= addr && addr < EXTPHYSMEM) ||
+		(EXTPHYSMEM <= addr && addr < (uint32_t)(nextfree - KERNBASE)) ||
+		((uint32_t)(nextfree - KERNBASE + BOOTMEMSIZE) <= addr)) {
+			continue;
+		}
+		if (! page_free_list) {
+			page_free_list = &pages[i];
+			tmp = &pages[i];
+		} else {
+			tmp->pp_link = &pages[i];
+			tmp = &pages[i];
+		}
 	}
 }
 
@@ -225,12 +246,23 @@ struct PageInfo *
 page_alloc(int alloc_flags)
 {
 	// Fill this function in
+	if (! page_free_list) {
+		return NULL;
+	}
 
+	struct PageInfo *p = page_free_list;
+	page_free_list = p->pp_link;
+	p->pp_link = NULL;
+
+	if (alloc_flags & ALLOC_ZERO) {
+		memset(page2kva(p), 0, PGSIZE);
+	}
+	
 #ifdef SANITIZE_SHADOW_BASE
 	// Unpoison allocated memory before accessing it!
 	// platform_asan_unpoison(page2kva(p), PGSIZE);
 #endif
-	return 0;
+	return p;
 }
 
 //
@@ -243,6 +275,12 @@ page_free(struct PageInfo *pp)
 	// Fill this function in
 	// Hint: You may want to panic if pp->pp_ref is nonzero or
 	// pp->pp_link is not NULL.
+	if (pp->pp_ref > 0 || pp->pp_link) {
+		panic("invalid free of page, ref > 0 or link != NULL");
+	}
+
+	pp->pp_link = page_free_list;
+	page_free_list = pp;
 }
 
 //

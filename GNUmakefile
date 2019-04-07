@@ -23,6 +23,8 @@ LABSETUP ?= ./
 
 TOP = .
 
+CFLAGS	+= -pipe -m32
+
 ifdef JOSLLVM
 
 CC	:= clang -target i386-gnu-linux -march=pentium2 -pipe
