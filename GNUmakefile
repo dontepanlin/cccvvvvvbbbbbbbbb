@@ -23,19 +23,15 @@ LABSETUP ?= ./
 
 TOP = .
 
-CFLAGS	+= -pipe -m32 -fno-pic
-
 ifdef JOSLLVM
 
-CC	:= clang
+CC	:= clang -target i386-gnu-linux -march=pentium2 -pipe
 AS	:= llvm-as
 AR	:= llvm-ar
 LD	:= ld.lld
 OBJCOPY	:= llvm/gnu-objcopy
 OBJDUMP	:= llvm-objdump
 NM	:= llvm-nm
-
-CFLAGS	+= -target i386-gnu-linux -march=pentium2
 
 EXTRA_CFLAGS	:= $(EXTRA_CFLAGS) -Wno-self-assign -Wno-format-nonliteral -Wno-address-of-packed-member
 
@@ -73,7 +69,7 @@ GCCPREFIX := $(shell if i386-jos-elf-objdump -i 2>&1 | grep '^elf32-i386$$' >/de
 	echo "***" 1>&2; exit 1; fi)
 endif
 
-CC	:= $(GCCPREFIX)gcc
+CC	:= $(GCCPREFIX)gcc -fno-pic -pipe
 AS	:= $(GCCPREFIX)as
 AR	:= $(GCCPREFIX)ar
 LD	:= $(GCCPREFIX)ld
@@ -119,11 +115,42 @@ GDBPORT	:= $(shell expr `id -u` % 5000 + 25000)
 # Only optimize to -O1 to discourage inlining, which complicates backtraces.
 CFLAGS := $(CFLAGS) $(DEFS) $(LABDEFS) -O1 -fno-builtin -I$(TOP) -MD
 CFLAGS += -fno-omit-frame-pointer
-CFLAGS += -Wall -Wformat=2 -Wno-unused-function -Werror
+CFLAGS += -Wall -Wformat=2 -Wno-unused-function -Werror -m32
 
 # Add -fno-stack-protector if the option exists.
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 CFLAGS += $(EXTRA_CFLAGS)
+
+ifdef KASAN
+
+# The definitions assume kernel base address at 0xDC000000, see kern/kernel.ld for details.
+# SANITIZE_SHADOW_OFF is an offset from shadow base (0xFA000000-(0xDC000000 >> 3)).
+# SANITIZE_SHADOW_SIZE of 24 MB allows 192 MB of addressible memory (due to byte granularity).
+KERN_SAN_CFLAGS := -fsanitize=address -fsanitize-blacklist=llvm/blacklist.txt \
+	-DSANITIZE_SHADOW_OFF=0xDE800000 -DSANITIZE_SHADOW_BASE=0xFA000000 \
+	-DSANITIZE_SHADOW_SIZE=0x1800000 -mllvm -asan-mapping-offset=0xDE800000
+
+KERN_SAN_LDFLAGS := --wrap memcpy  \
+	--wrap memset  \
+	--wrap memmove \
+	--wrap bcopy   \
+	--wrap bzero   \
+	--wrap bcmp    \
+	--wrap memcmp  \
+	--wrap strcat  \
+	--wrap strcpy  \
+	--wrap strlcpy \
+	--wrap strncpy \
+	--wrap strlcat \
+	--wrap strncat \
+	--wrap strnlen \
+	--wrap strlen
+else
+
+KERN_SAN_CFLAGS :=
+KERN_SAN_LDFLAGS :=
+
+endif
 
 ifdef GRADE3_TEST
 CFLAGS += -DGRADE3_TEST=$(GRADE3_TEST)
@@ -137,7 +164,7 @@ endif
 # Common linker flags
 LDFLAGS := -m elf_i386
 
-# Linker flags for JOS user programs
+# Linker flags for JOS programs
 ULDFLAGS := -T user/user.ld
 
 # Lists that the */Makefrag makefile fragments will add to
