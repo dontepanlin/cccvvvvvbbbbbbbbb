@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "monitor.h": "c",
-        "elf.h": "c",
-        "sched.h": "c"
-    }
-}
