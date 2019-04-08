@@ -117,9 +117,9 @@ int mon_pages(int argc, char **argv, struct Trapframe *tf)
 	int prev = 0;
 	bool prev_al = true;
 	int pc = 0;
-	for  (struct PageInfo* it = &pages[0]; it < pages + npages; it++) {
-		bool al = it->pp_ref > 0;
-		if (prev_al != al || it == pages + npages - 1) {
+	for  (struct PageInfo* pp = &pages[0]; pp < pages + npages; pp++) {
+		bool al = pp->pp_ref > 0;
+		if (prev_al != al || pp == pages + npages - 1) {
 			if (prev == pc -1) {
 				cprintf("%d", prev + 1);
 			} else {

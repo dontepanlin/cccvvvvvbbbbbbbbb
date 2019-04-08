@@ -213,30 +213,26 @@ page_init(void)
     pp->pp_link = NULL;
     pp++;
 	int c = 0;
-    while (pp != &pages[npages_basemem]) {
+	for (size_t i = 1; i < npages_basemem; i++, pp++) {
         pp->pp_ref = 0;
         pp->pp_link = page_free_list;
         page_free_list = pp;
-        pp++;
 		c++;
     }
 	cprintf("Count1 %d \n", c);
-    while (pp != pa2page(EXTPHYSMEM)) {
-        pp->pp_ref = 1;
+	for (pp = pa2page(IOPHYSMEM); pp != pa2page(EXTPHYSMEM); pp++) {
+		pp->pp_ref = 1;
         pp->pp_link = NULL;
-        pp++;
 		c++;
-    }
+	}
 	cprintf("Count2 %d \n", c);
-    pp = pa2page(PADDR(boot_alloc(0)));
-    while (pp != pages + npages) {
-        pp->pp_ref = 0;
+	for (pp = pa2page(PADDR(boot_alloc(0))); pp != pages + npages; pp++) {
+		pp->pp_ref = 0;
         pp->pp_link = page_free_list;
         page_free_list = pp;
-        pp++;
 		c++;
-    }
-	cprintf("Count2 %d \n", c);
+	}
+	cprintf("Count3 %d \n", c);
 }
 
 //
