@@ -59,6 +59,8 @@ int	page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm);
 void	page_remove(pde_t *pgdir, void *va);
 struct PageInfo *page_lookup(pde_t *pgdir, void *va, pte_t **pte_store);
 void	page_decref(struct PageInfo *pp);
+void *
+boot_alloc(uint32_t n);
 
 void	tlb_invalidate(pde_t *pgdir, void *va);
 
@@ -79,6 +81,9 @@ pa2page(physaddr_t pa)
 static inline void*
 page2kva(struct PageInfo *pp)
 {
+	if ((uint32_t)KADDR(page2pa(pp)) == (uint32_t)0x5ffff000) {
+		cprintf("TEST 2 %x\n", page2pa(pp));
+	}
 	return KADDR(page2pa(pp));
 }
 

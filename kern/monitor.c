@@ -118,7 +118,10 @@ int mon_pages(int argc, char **argv, struct Trapframe *tf)
 	bool prev_al = true;
 	int pc = 0;
 	for  (struct PageInfo* pp = &pages[0]; pp < pages + npages; pp++) {
-		bool al = pp->pp_ref > 0;
+		bool al = pp->pp_link == NULL;
+		if (pc == 1) {
+			cprintf("qqqqq %p\n", pp->pp_link);
+		}
 		if (prev_al != al || pp == pages + npages - 1) {
 			if (prev == pc -1) {
 				cprintf("%d", prev + 1);
