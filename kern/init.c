@@ -75,13 +75,14 @@ i386_init(void)
 	ENV_CREATE(TEST, ENV_TYPE_USER);
 #else
 	// Touch all you want.
-	ENV_CREATE(user_hello, ENV_TYPE_USER);
+	ENV_CREATE(user_buggyhello, ENV_TYPE_USER);
 #endif // TEST*
 #endif
 
 	// Schedule and run the first user environment!
 	// sched_yield();
-	monitor(NULL);
+	//monitor(NULL);
+	env_run(&envs[0]);
 }
 
 
