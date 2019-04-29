@@ -248,6 +248,7 @@ ifeq ($(CONFIG_KSPACE),y)
 include prog/Makefrag
 else
 include user/Makefrag
+include fs/Makefrag
 endif
 
 QEMUOPTS = -drive format=raw,index=0,media=disk,file=$(OBJDIR)/kern/kernel.img -serial mon:stdio -gdb tcp::$(GDBPORT)
@@ -259,6 +260,8 @@ endif
 
 QEMUOPTS += $(shell if $(QEMU) -nographic -help | grep -q '^-D '; then echo '-D qemu.log'; fi)
 IMAGES = $(OBJDIR)/kern/kernel.img
+QEMUOPTS += -drive format=raw,index=1,media=disk,file=$(OBJDIR)/fs/fs.img
+IMAGES += $(OBJDIR)/fs/fs.img
 QEMUOPTS += $(QEMUEXTRA)
 
 define POST_CHECKOUT
