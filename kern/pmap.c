@@ -535,6 +535,7 @@ page_insert(pde_t *pgdir, struct PageInfo *pp, void *va, int perm)
 	}
 	uint32_t perms = perm | PTE_P;
 	*entry_ptr = page2pa(pp) | perms;
+	tlb_invalidate(pgdir, va);
 	return 0;
 }
 
