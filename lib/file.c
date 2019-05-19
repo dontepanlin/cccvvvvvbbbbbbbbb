@@ -2,7 +2,7 @@
 #include <inc/string.h>
 #include <inc/lib.h>
 
-#define debug 0
+
 
 union Fsipc fsipcbuf __attribute__((aligned(PGSIZE)));
 
@@ -141,7 +141,18 @@ devfile_write(struct Fd *fd, const void *buf, size_t n)
 	// remember that write is always allowed to write *fewer*
 	// bytes than requested.
 	// LAB 10: Your code here
-	panic("devfile_write not implemented");
+	int32_t retval = 0;
+
+	fsipcbuf.write.req_fileid = fd->fd_file.id;
+	fsipcbuf.write.req_n = n;
+
+	size_t can_write = sizeof(fsipcbuf.write.req_buf);
+	size_t will_write = MIN(can_write, n);
+	memmove(fsipcbuf.write.req_buf, buf, will_write);
+
+	retval = fsipc(FSREQ_WRITE, NULL);
+
+	return retval;
 }
 
 static int
