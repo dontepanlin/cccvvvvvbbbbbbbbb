@@ -120,7 +120,7 @@
 #define UENVS		(UPAGES - PTSIZE)
 // Read-only virtual syscall space
 // LAB 12: Your code here.
-#define UVSYS       0
+#define UVSYS       0xdebfe000
 
 /*
  * Top of user VM. User can manipulate VA from UTOP-1 and down!
