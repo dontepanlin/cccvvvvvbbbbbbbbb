@@ -1,7 +1,7 @@
 #include <inc/lib.h>
 
-#define BUFSIZ 1024		/* Find the buffer overrun bug! */
-int debug = 0;
+
+int sdebug = 0;
 
 
 // gettoken(s, 0) prepares gettoken for subsequent calls and returns 0.
@@ -21,7 +21,7 @@ int gettoken(char *s, char **token);
 void
 runcmd(char* s)
 {
-	char *argv[MAXARGS], *t, argv0buf[BUFSIZ];
+	char *argv[MAXARGS], *t, argv0buf[1024];
 	int argc, c, i, r, p[2], fd, pipe_child;
 
 	pipe_child = 0;
@@ -55,7 +55,18 @@ again:
 			// then close the original 'fd'.
 
 			// LAB 11: Your code here.
-			panic("< redirection not implemented");
+			if ((fd = open(t, O_RDONLY)) < 0) {
+				cprintf("sh: open %s: %i", t, fd);
+				exit();
+			}
+			if (fd != 0) {
+				int res = dup(fd, 0);
+				if (res < 0) {
+					cprintf("sh: failed dup: %i", res);
+					exit();
+				}
+				close(fd);
+			}
 			break;
 
 		case '>':	// Output redirection
@@ -79,7 +90,7 @@ again:
 				cprintf("pipe: %i", r);
 				exit();
 			}
-			if (debug)
+			if (sdebug)
 				cprintf("PIPE: %d %d\n", p[0], p[1]);
 			if ((r = fork()) < 0) {
 				cprintf("fork: %i", r);
@@ -118,7 +129,7 @@ again:
 runit:
 	// Return immediately if command line was empty.
 	if(argc == 0) {
-		if (debug)
+		if (sdebug)
 			cprintf("EMPTY COMMAND\n");
 		return;
 	}
@@ -135,7 +146,7 @@ runit:
 	argv[argc] = 0;
 
 	// Print the command.
-	if (debug) {
+	if (sdebug) {
 		cprintf("[%08x] SPAWN:", thisenv->env_id);
 		for (i = 0; argv[i]; i++)
 			cprintf(" %s", argv[i]);
@@ -150,20 +161,20 @@ runit:
 	// spawned command to exit.
 	close_all();
 	if (r >= 0) {
-		if (debug)
+		if (sdebug)
 			cprintf("[%08x] WAIT %s %08x\n", thisenv->env_id, argv[0], r);
 		wait(r);
-		if (debug)
+		if (sdebug)
 			cprintf("[%08x] wait finished\n", thisenv->env_id);
 	}
 
 	// If we were the left-hand part of a pipe,
 	// wait for the right-hand part to finish.
 	if (pipe_child) {
-		if (debug)
+		if (sdebug)
 			cprintf("[%08x] WAIT pipe_child %08x\n", thisenv->env_id, pipe_child);
 		wait(pipe_child);
-		if (debug)
+		if (sdebug)
 			cprintf("[%08x] wait finished\n", thisenv->env_id);
 	}
 
@@ -192,12 +203,12 @@ _gettoken(char *s, char **p1, char **p2)
 	int t;
 
 	if (s == 0) {
-		if (debug > 1)
+		if (sdebug > 1)
 			cprintf("GETTOKEN NULL\n");
 		return 0;
 	}
 
-	if (debug > 1)
+	if (sdebug > 1)
 		cprintf("GETTOKEN: %s\n", s);
 
 	*p1 = 0;
@@ -206,7 +217,7 @@ _gettoken(char *s, char **p1, char **p2)
 	while (strchr(WHITESPACE, *s))
 		*s++ = 0;
 	if (*s == 0) {
-		if (debug > 1)
+		if (sdebug > 1)
 			cprintf("EOL\n");
 		return 0;
 	}
@@ -215,7 +226,7 @@ _gettoken(char *s, char **p1, char **p2)
 		*p1 = s;
 		*s++ = 0;
 		*p2 = s;
-		if (debug > 1)
+		if (sdebug > 1)
 			cprintf("TOK %c\n", t);
 		return t;
 	}
@@ -223,7 +234,7 @@ _gettoken(char *s, char **p1, char **p2)
 	while (*s && !strchr(WHITESPACE SYMBOLS, *s))
 		s++;
 	*p2 = s;
-	if (debug > 1) {
+	if (sdebug > 1) {
 		t = **p2;
 		**p2 = 0;
 		cprintf("WORD: %s\n", *p1);
@@ -268,7 +279,7 @@ umain(int argc, char **argv)
 	while ((r = argnext(&args)) >= 0)
 		switch (r) {
 		case 'd':
-			debug++;
+			sdebug++;
 			break;
 		case 'i':
 			interactive = 1;
@@ -296,21 +307,21 @@ umain(int argc, char **argv)
 
 		buf = readline(interactive ? "$ " : NULL);
 		if (buf == NULL) {
-			if (debug)
+			if (sdebug)
 				cprintf("EXITING\n");
 			exit();	// end of file
 		}
-		if (debug)
+		if (sdebug)
 			cprintf("LINE: %s\n", buf);
 		if (buf[0] == '#')
 			continue;
 		if (echocmds)
 			printf("# %s\n", buf);
-		if (debug)
+		if (sdebug)
 			cprintf("BEFORE FORK\n");
 		if ((r = fork()) < 0)
 			panic("fork: %i", r);
-		if (debug)
+		if (sdebug)
 			cprintf("FORK: %d\n", r);
 		if (r == 0) {
 			runcmd(buf);

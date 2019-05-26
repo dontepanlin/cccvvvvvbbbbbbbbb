@@ -249,9 +249,9 @@ write(int fdnum, const void *buf, size_t n)
 		cprintf("[%08x] write %d -- bad mode\n", thisenv->env_id, fdnum);
 		return -E_INVAL;
 	}
-	if (debug)
-		cprintf("write %d %p %d via dev %s\n",
-			fdnum, buf, n, dev->dev_name);
+	// if (debug)
+	// 	cprintf("write %d %p %d via dev %s\n",
+	// 		fdnum, buf, n, dev->dev_name);
 	if (!dev->dev_write)
 		return -E_NOT_SUPP;
 	return (*dev->dev_write)(fd, buf, n);

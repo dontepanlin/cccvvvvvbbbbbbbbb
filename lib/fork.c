@@ -91,7 +91,7 @@ duppage(envid_t envid, unsigned pn)
 	pte_t entry = uvpt[pn];
 
 	int32_t retval = 0;
-	if (! (entry & PTE_W || entry & PTE_COW)) {
+	if (! (entry & PTE_W || entry & PTE_COW) || (entry & PTE_SHARE)) {
 		retval = sys_page_map(thisenv->env_id, va, envid, va, entry & PTE_SYSCALL);
 		if (retval < 0) {
 			panic("sys_page_map: %d", retval);

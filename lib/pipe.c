@@ -55,8 +55,8 @@ pipe(int pfd[2])
 	fd1->fd_dev_id = devpipe.dev_id;
 	fd1->fd_omode = O_WRONLY;
 
-	if (debug)
-		cprintf("[%08x] pipecreate %08x\n", thisenv->env_id, uvpt[PGNUM(va)]);
+	// if (debug)
+	// 	cprintf("[%08x] pipecreate %08x\n", thisenv->env_id, uvpt[PGNUM(va)]);
 
 	pfd[0] = fd2num(fd0);
 	pfd[1] = fd2num(fd1);
@@ -109,9 +109,9 @@ devpipe_read(struct Fd *fd, void *vbuf, size_t n)
 	struct Pipe *p;
 
 	p = (struct Pipe*)fd2data(fd);
-	if (debug)
-		cprintf("[%08x] devpipe_read %08x %d rpos %d wpos %d\n",
-			thisenv->env_id, uvpt[PGNUM(p)], n, p->p_rpos, p->p_wpos);
+	// if (debug)
+	// 	cprintf("[%08x] devpipe_read %08x %d rpos %d wpos %d\n",
+	// 		thisenv->env_id, uvpt[PGNUM(p)], n, p->p_rpos, p->p_wpos);
 
 	buf = vbuf;
 	for (i = 0; i < n; i++) {
@@ -124,8 +124,8 @@ devpipe_read(struct Fd *fd, void *vbuf, size_t n)
 			if (_pipeisclosed(fd, p))
 				return 0;
 			// yield and see what happens
-			if (debug)
-				cprintf("devpipe_read yield\n");
+			// if (debug)
+			// 	cprintf("devpipe_read yield\n");
 			sys_yield();
 		}
 		// there's a byte.  take it.
@@ -144,9 +144,9 @@ devpipe_write(struct Fd *fd, const void *vbuf, size_t n)
 	struct Pipe *p;
 
 	p = (struct Pipe*) fd2data(fd);
-	if (debug)
-		cprintf("[%08x] devpipe_write %08x %d rpos %d wpos %d\n",
-			thisenv->env_id, uvpt[PGNUM(p)], n, p->p_rpos, p->p_wpos);
+	// if (debug)
+	// 	cprintf("[%08x] devpipe_write %08x %d rpos %d wpos %d\n",
+	// 		thisenv->env_id, uvpt[PGNUM(p)], n, p->p_rpos, p->p_wpos);
 
 	buf = vbuf;
 	for (i = 0; i < n; i++) {
@@ -158,8 +158,8 @@ devpipe_write(struct Fd *fd, const void *vbuf, size_t n)
 			if (_pipeisclosed(fd, p))
 				return 0;
 			// yield and see what happens
-			if (debug)
-				cprintf("devpipe_write yield\n");
+			// if (debug)
+			// 	cprintf("devpipe_write yield\n");
 			sys_yield();
 		}
 		// there's room for a byte.  store it.
