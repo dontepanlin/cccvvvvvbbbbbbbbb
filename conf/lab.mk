@@ -1,3 +1,3 @@
 LAB=11
 CONFIG_KSPACE=n
-LABDEFS=-Ddebug=1
+LABDEFS=-Ddebug=0
