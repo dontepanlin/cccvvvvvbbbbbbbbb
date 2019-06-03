@@ -214,12 +214,14 @@ serve_read(envid_t envid, union Fsipc *ipc)
 	if (retval < 0) {
 		return retval;
 	}
-	ssize_t bytes_read = file_read(file_handle->o_file, ret->ret_buf, req->req_n, file_handle->o_fd->fd_offset);
+	int req_n = req->req_n > PGSIZE ? PGSIZE : req->req_n;
+	ssize_t bytes_read = file_read(file_handle->o_file, ret->ret_buf, req_n, file_handle->o_fd->fd_offset);
 	if (bytes_read < 0) {
 		return bytes_read;
 	}
 
 	file_handle->o_fd->fd_offset += bytes_read;
+	assert(bytes_read <= PGSIZE);
 	return bytes_read;
 }
 
