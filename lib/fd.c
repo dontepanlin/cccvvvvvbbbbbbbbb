@@ -319,3 +319,8 @@ stat(const char *path, struct Stat *stat)
 	return r;
 }
 
+int
+mkfifo(const char *path)
+{
+	//
+}
