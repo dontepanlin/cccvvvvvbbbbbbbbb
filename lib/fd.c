@@ -323,4 +323,9 @@ int
 mkfifo(const char *path)
 {
 	//
+	int fd;
+
+	if ((fd = open(path, O_WRONLY|O_CREAT|O_TRUNC|O_FIFO)) < 0)
+		return fd;
+	return 0;
 }

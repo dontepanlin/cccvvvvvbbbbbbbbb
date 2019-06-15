@@ -98,6 +98,7 @@ KERN_BINFILES :=	user/hello \
 			user/primes \
 			user/memlayout \
 			user/testfile \
+			user/mkfifo \
 			user/icode \
 			fs/fs \
 			user/testfdsharing \

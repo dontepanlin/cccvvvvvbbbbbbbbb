@@ -327,6 +327,7 @@ walk_path(const char *path, struct File **pdir, struct File **pf, char *lastelem
 
 	if (pdir)
 		*pdir = dir;
+	cprintf("%p \n", (void*)f);
 	*pf = f;
 	return 0;
 }
@@ -338,7 +339,7 @@ walk_path(const char *path, struct File **pdir, struct File **pf, char *lastelem
 // Create "path".  On success set *pf to point at the file and return 0.
 // On error return < 0.
 int
-file_create(const char *path, struct File **pf)
+file_create(const char *path, struct File **pf, bool isfifo)
 {
 	char name[MAXNAMELEN];
 	int r;
@@ -352,6 +353,8 @@ file_create(const char *path, struct File **pf)
 		return r;
 
 	strcpy(f->f_name, name);
+	f->f_type = isfifo ? FTYPE_FIFO : FTYPE_REG;
+	cprintf("File type set to %d", f->f_type);
 	*pf = f;
 	file_flush(dir);
 	return 0;

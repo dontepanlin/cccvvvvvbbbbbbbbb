@@ -118,18 +118,24 @@ serve_open(envid_t envid, struct Fsreq_open *req,
 		return r;
 	}
 	fileid = r;
-
+	cprintf("%s \n", path);
 	// Open the file
-	if (req->req_omode & O_CREAT) {
-		if ((r = file_create(path, &f)) < 0) {
+	if (req->req_omode & O_CREAT)
+	{
+		cprintf("%s \n", path);
+		if ((r = file_create(path, &f, req->req_omode & O_FIFO)) < 0)
+		{
 			if (!(req->req_omode & O_EXCL) && r == -E_FILE_EXISTS)
 				goto try_open;
 			if (debug)
 				cprintf("file_create failed: %i", r);
 			return r;
 		}
-	} else {
-try_open:
+	}
+	else
+	{
+	try_open:
+		cprintf("%s \n", path);
 		if ((r = file_open(path, &f)) < 0) {
 			if (debug)
 				cprintf("file_open failed: %i", r);
