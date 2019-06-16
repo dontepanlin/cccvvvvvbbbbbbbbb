@@ -20,6 +20,8 @@ USERAPPS :=		$(OBJDIR)/user/init \
 			$(OBJDIR)/user/fifoprog \
 			$(OBJDIR)/user/echo \
 			$(OBJDIR)/user/ls \
+			$(OBJDIR)/user/client \
+			$(OBJDIR)/user/server \
 			$(OBJDIR)/user/lsfd \
 			$(OBJDIR)/user/num \
 			$(OBJDIR)/user/forktree \

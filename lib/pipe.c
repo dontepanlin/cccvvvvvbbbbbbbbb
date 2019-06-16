@@ -55,8 +55,8 @@ pipe(int pfd[2])
 	fd1->fd_dev_id = devpipe.dev_id;
 	fd1->fd_omode = O_WRONLY;
 
-	// if (debug)
-	// 	cprintf("[%08x] pipecreate %08x\n", thisenv->env_id, uvpt[PGNUM(va)]);
+
+	cprintf("[%08x] pipecreate %08x\n", thisenv->env_id, uvpt[PGNUM(va)]);
 
 	pfd[0] = fd2num(fd0);
 	pfd[1] = fd2num(fd1);
@@ -122,10 +122,14 @@ devpipe_read(struct Fd *fd, void *vbuf, size_t n)
 				return i;
 			// if all the writers are gone, note eof
 			if (_pipeisclosed(fd, p))
+			{
+				cprintf("Pipe closed\n");
 				return 0;
+			}
+				
 			// yield and see what happens
 			// if (debug)
-			// 	cprintf("devpipe_read yield\n");
+			cprintf("devpipe_read yield\n");
 			sys_yield();
 		}
 		// there's a byte.  take it.
@@ -158,8 +162,7 @@ devpipe_write(struct Fd *fd, const void *vbuf, size_t n)
 			if (_pipeisclosed(fd, p))
 				return 0;
 			// yield and see what happens
-			// if (debug)
-			// 	cprintf("devpipe_write yield\n");
+			cprintf("devpipe_write yield\n");
 			sys_yield();
 		}
 		// there's room for a byte.  store it.

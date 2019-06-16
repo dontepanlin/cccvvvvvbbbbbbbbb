@@ -84,8 +84,8 @@ fd_lookup(int fdnum, struct Fd **fd_store)
 	}
 	fd = INDEX2FD(fdnum);
 	if (!(uvpd[PDX(fd)] & PTE_P) || !(uvpt[PGNUM(fd)] & PTE_P)) {
-		if (debug)
-			cprintf("[%08x] closed fd %d\n", thisenv->env_id, fdnum);
+		// if (debug)
+		// 	cprintf("[%08x] closed fd %d\n", thisenv->env_id, fdnum);
 		return -E_INVAL;
 	}
 	*fd_store = fd;
@@ -217,12 +217,19 @@ read(int fdnum, void *buf, size_t n)
 	}
 	if (!dev->dev_read)
 		return -E_NOT_SUPP;
+	// if (fdnum == 2)
+	// 	cprintf("type file %d\n", fd->fd_dev_id);
+	
+	if (fd->fd_dev_id == devpipe.dev_id)
+		cprintf("KUKU\n");
 
-	if (fd->f_type == FTYPE_FIFO)
+	if (fd->f_type == FTYPE_FIFO &&
+		fd->fd_dev_id == devfile.dev_id)
 	{
-		cprintf("pipe id %d\n", fd->p[0]);
-		return read(fd->p[0], buf, n);
-	}	
+		cprintf("read from pipe id %d\n", fd->p[0]);
+		
+		return readn(fd->p[0], buf, n);
+	}
 	return (*dev->dev_read)(fd, buf, n);
 }
 
@@ -258,11 +265,16 @@ write(int fdnum, const void *buf, size_t n)
 	// if (debug)
 	// 	cprintf("write %d %p %d via dev %s\n",
 	// 		fdnum, buf, n, dev->dev_name);
+	// if (fdnum == 2)
+	// 	cprintf("type file %d\n", fd->fd_dev_id);
 	if (!dev->dev_write)
 		return -E_NOT_SUPP;
-	if (fd->f_type == FTYPE_FIFO)
+	if (fd->fd_dev_id == devpipe.dev_id)
+		cprintf("KUKU %d\n", fdnum);
+	if (fd->f_type == FTYPE_FIFO &&
+		fd->fd_dev_id == devfile.dev_id)
 	{
-		cprintf("pipe id %d\n", fd->p[1]);
+		cprintf("write to pipe %d\n", fd->p[1]);
 		return write(fd->p[1], buf, n);
 	}	
 	return (*dev->dev_write)(fd, buf, n);

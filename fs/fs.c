@@ -473,7 +473,7 @@ file_set_size(struct File *f, off_t newsize)
 {
 	if (f->f_type == FTYPE_FIFO)
 	{
-		return -1;
+		return 0;
 	}
 	if (f->f_size > newsize)
 		file_truncate_blocks(f, newsize);

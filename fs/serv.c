@@ -163,13 +163,21 @@ try_open:
 	o->o_fd->fd_dev_id = devfile.dev_id;
 	o->o_mode = req->req_omode;
 
+	if (req->req_omode & O_RDONLY)
+		o->o_file->readable++;
+	
+	if (req->req_omode & O_WRONLY)
+		o->o_file->writeble++;
+
+
 	if (o->o_file->f_type == FTYPE_FIFO)
 	{
 		o->o_fd->f_type = FTYPE_FIFO;
-		if (o->o_fd->p == 0){
+		if (o->o_fd->p[0] == 0 && o->o_fd->p[1] == 0 ){
+			cprintf("---PIPE init\n");
 			int i;
 			if ((i = pipe(o->o_fd->p)) < 0)
-				panic("pipe: %i", i);
+				panic("cant creat pipe: %i", i);
 		}
 	}
 
@@ -298,6 +306,26 @@ serve_flush(envid_t envid, struct Fsreq_flush *req)
 
 	if ((r = openfile_lookup(envid, req->req_fileid, &o)) < 0)
 		return r;
+	
+	if (o->o_mode & O_RDONLY)
+		o->o_file->readable--;
+	
+	if (o->o_mode & O_WRONLY)
+		o->o_file->writeble--;
+
+	if (o->o_file->readable == 0 && o->o_file->writeble == 0)
+	{
+		if (o->o_file->p[0])
+		{
+			close(o->o_file->p[0]);
+			o->o_file->p[0] = 0;
+		}
+		if (o->o_file->p[1])
+		{
+			close(o->o_file->p[1]);
+			o->o_file->p[1] = 0;
+		}		
+	}
 	file_flush(o->o_file);
 	return 0;
 }
