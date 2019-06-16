@@ -129,7 +129,7 @@ devpipe_read(struct Fd *fd, void *vbuf, size_t n)
 				
 			// yield and see what happens
 			// if (debug)
-			cprintf("devpipe_read yield\n");
+			// cprintf("devpipe_read yield\n");
 			sys_yield();
 		}
 		// there's a byte.  take it.

@@ -89,6 +89,7 @@ open(const char *path, int mode)
 		int i;
 		if ((i = pipe(fd->p)) < 0)
 				panic("cant creat pipe: %i", i);
+		cprintf("---PIPE init\n");
 	}
 	cprintf("FSIPC recv %p\n", fd);
 	return fd2num(fd);

@@ -163,6 +163,9 @@ try_open:
 	o->o_fd->fd_dev_id = devfile.dev_id;
 	o->o_mode = req->req_omode;
 
+	if (o->o_file->f_type == FTYPE_FIFO)
+		o->o_fd->f_type = FTYPE_FIFO;
+
 	// if (req->req_omode & O_RDONLY)
 	// 	o->o_file->readable++;
 	
