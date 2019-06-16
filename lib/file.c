@@ -84,6 +84,12 @@ open(const char *path, int mode)
 		fd_close(fd, 0);
 		return r;
 	}
+	if (fd->f_type == FTYPE_FIFO)
+	{
+		int i;
+		if ((i = pipe(fd->p)) < 0)
+				panic("cant creat pipe: %i", i);
+	}
 	cprintf("FSIPC recv %p\n", fd);
 	return fd2num(fd);
 }

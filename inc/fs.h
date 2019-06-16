@@ -30,9 +30,6 @@ struct File {
 	char f_name[MAXNAMELEN];	// filename
 	off_t f_size;			// file size in bytes
 	uint32_t f_type;		// file type
-	int p[2];
-	int readable;
-	int writeble;
 
 	// Block pointers.
 	// A block is allocated iff its value is != 0.
@@ -41,7 +38,7 @@ struct File {
 
 	// Pad out to 256 bytes; must do arithmetic in case we're compiling
 	// fsformat on a 64-bit machine.
-	uint8_t f_pad[256 - MAXNAMELEN - 24 - 4*NDIRECT - 4];
+	uint8_t f_pad[256 - MAXNAMELEN - 8 - 4*NDIRECT - 4];
 } __attribute__((packed));	// required only on some 64-bit machines
 
 // An inode block contains exactly BLKFILES 'struct File's
