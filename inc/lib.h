@@ -99,6 +99,7 @@ ssize_t	readn(int fd, void *buf, size_t nbytes);
 int	dup(int oldfd, int newfd);
 int	fstat(int fd, struct Stat *statbuf);
 int	stat(const char *path, struct Stat *statbuf);
+int	mkfifo(const char *path);
 
 // file.c
 int	open(const char *path, int mode);
@@ -137,6 +138,7 @@ void	wait(envid_t env);
 #define	O_TRUNC		0x0200		/* truncate to zero length */
 #define	O_EXCL		0x0400		/* error if already exists */
 #define O_MKDIR		0x0800		/* create directory, not regular file */
+#define O_FIFO		0x1000	
 
 #ifdef JOS_PROG
 extern void (* volatile sys_exit)(void);

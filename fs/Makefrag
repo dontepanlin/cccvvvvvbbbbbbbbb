@@ -16,6 +16,8 @@ FSIMGTXTFILES :=	fs/newmotd \
 
 USERAPPS :=		$(OBJDIR)/user/init \
 			$(OBJDIR)/user/cat \
+			$(OBJDIR)/user/mkfifo \
+			$(OBJDIR)/user/fifoprog \
 			$(OBJDIR)/user/echo \
 			$(OBJDIR)/user/ls \
 			$(OBJDIR)/user/lsfd \

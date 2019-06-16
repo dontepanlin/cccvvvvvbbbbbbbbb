@@ -84,7 +84,7 @@ open(const char *path, int mode)
 		fd_close(fd, 0);
 		return r;
 	}
-
+	cprintf("FSIPC recv %p\n", fd);
 	return fd2num(fd);
 }
 
@@ -116,7 +116,6 @@ devfile_read(struct Fd *fd, void *buf, size_t n)
 	// bytes read will be written back to fsipcbuf by the file
 	// system server.
 	int r;
-
 	fsipcbuf.read.req_fileid = fd->fd_file.id;
 	fsipcbuf.read.req_n = n;
 	if ((r = fsipc(FSREQ_READ, NULL)) < 0)

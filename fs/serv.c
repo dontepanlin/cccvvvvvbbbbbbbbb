@@ -120,8 +120,11 @@ serve_open(envid_t envid, struct Fsreq_open *req,
 	fileid = r;
 
 	// Open the file
-	if (req->req_omode & O_CREAT) {
-		if ((r = file_create(path, &f)) < 0) {
+	if (req->req_omode & O_CREAT)
+	{
+		cprintf("%s \n", path);
+		if ((r = file_create(path, &f, req->req_omode & O_FIFO)) < 0)
+		{
 			if (!(req->req_omode & O_EXCL) && r == -E_FILE_EXISTS)
 				goto try_open;
 			if (debug)
@@ -159,6 +162,16 @@ try_open:
 	o->o_fd->fd_omode = req->req_omode & O_ACCMODE;
 	o->o_fd->fd_dev_id = devfile.dev_id;
 	o->o_mode = req->req_omode;
+
+	if (o->o_file->f_type == FTYPE_FIFO)
+	{
+		o->o_fd->f_type = FTYPE_FIFO;
+		if (o->o_fd->p == 0){
+			int i;
+			if ((i = pipe(o->o_fd->p)) < 0)
+				panic("pipe: %i", i);
+		}
+	}
 
 	if (debug)
 		cprintf("sending success, page %08x\n", (uintptr_t) o->o_fd);
@@ -269,7 +282,7 @@ serve_stat(envid_t envid, union Fsipc *ipc)
 
 	strcpy(ret->ret_name, o->o_file->f_name);
 	ret->ret_size = o->o_file->f_size;
-	ret->ret_isdir = (o->o_file->f_type == FTYPE_DIR);
+	ret->ret_isdir = o->o_file->f_type;
 	return 0;
 }
 

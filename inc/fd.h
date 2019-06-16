@@ -31,6 +31,9 @@ struct Fd {
 	int fd_dev_id;
 	off_t fd_offset;
 	int fd_omode;
+	int f_type;
+	int p[2];
+
 	union {
 		// File server files
 		struct FdFile fd_file;

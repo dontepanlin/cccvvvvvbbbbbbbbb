@@ -217,6 +217,12 @@ read(int fdnum, void *buf, size_t n)
 	}
 	if (!dev->dev_read)
 		return -E_NOT_SUPP;
+
+	if (fd->f_type == FTYPE_FIFO)
+	{
+		cprintf("pipe id %d\n", fd->p[0]);
+		return read(fd->p[0], buf, n);
+	}	
 	return (*dev->dev_read)(fd, buf, n);
 }
 
@@ -254,6 +260,11 @@ write(int fdnum, const void *buf, size_t n)
 	// 		fdnum, buf, n, dev->dev_name);
 	if (!dev->dev_write)
 		return -E_NOT_SUPP;
+	if (fd->f_type == FTYPE_FIFO)
+	{
+		cprintf("pipe id %d\n", fd->p[1]);
+		return write(fd->p[1], buf, n);
+	}	
 	return (*dev->dev_write)(fd, buf, n);
 }
 
@@ -318,4 +329,16 @@ stat(const char *path, struct Stat *stat)
 	close(fd);
 	return r;
 }
+
+int
+mkfifo(const char *path)
+{
+	//
+	int fd;
+
+	if ((fd = open(path, O_WRONLY|O_CREAT|O_FIFO)) < 0)
+		return fd;
+	close(fd);
+	return 0;
+} 
 
